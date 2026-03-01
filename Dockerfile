@@ -1,0 +1,22 @@
+FROM python:3.12.3-bookworm AS builder
+
+RUN apt-get update && apt-get upgrade -y
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN pip install --prefix=/install -r requirements.txt
+
+
+FROM python:3.12.3-slim
+
+WORKDIR /app
+
+COPY --from=builder /install /usr/local
+
+COPY . .
+
+CMD ["uvicorn", "app.main:app",  "--host", "0.0.0.0", "--port", "8000"]
+
+EXPOSE 8080
