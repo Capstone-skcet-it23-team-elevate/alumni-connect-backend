@@ -1,38 +1,36 @@
-version: "3.9"
+networks:
+  alumni-connect-network:
+    driver: bridge
+
+volumes:
+  alumni_postgres_data:
+    driver: local
 
 services:
   db:
     image: postgres:16
+    # env_file:
+    #   - .env
     environment:
-      POSTGRES_USER: alumniuser
-      POSTGRES_PASSWORD: alumnipass
-      POSTGRES_DB: alumniconnect
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - /tmp/alumni_postgres_data:/var/lib/postgresql/data
+    networks:
+      - alumni-connect-network
+    restart: unless-stopped
 
-  pgadmin:
-    image: dpage/pgadmin4
+  backend:
+    image: shobanchiddarth/alumni-connect-backend:0.0.2
+    # env_file:
+    #   - .env
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@alumni.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      DATABASE_URL: ${DATABASE_URL}
     ports:
-      - "5050:80"
+      - "127.0.0.1:8000:8000"
+    networks:
+      - alumni-connect-network
     depends_on:
       - db
-
-  api:
-    build: .
-    ports:
-      - "8000:8000"
-    environment:
-      DATABASE_URL: postgresql://alumniuser:alumnipass@db:5432/alumniconnect
-    depends_on:
-      - db
-    volumes:
-      - .:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-
-volumes:
-  pgdata:
+    restart: unless-stopped
