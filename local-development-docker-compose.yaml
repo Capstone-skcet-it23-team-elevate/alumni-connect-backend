@@ -1,0 +1,36 @@
+networks:
+  alumni-connect-network:
+    driver: bridge
+
+volumes:
+  alumni_postgres_data:
+    driver: local
+
+services:
+  db:
+    image: postgres:16
+    # env_file:
+    #   - .env
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: alumni_connect
+    volumes:
+      - /tmp/alumni_postgres_data:/var/lib/postgresql/data
+    networks:
+      - alumni-connect-network
+    restart: unless-stopped
+
+  backend:
+    image: shobanchiddarth/alumni-connect-backend:0.0.2
+    # env_file:
+    #   - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/alumni_connect
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks:
+      - alumni-connect-network
+    depends_on:
+      - db
+    restart: unless-stopped
